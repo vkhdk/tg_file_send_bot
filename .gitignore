@@ -1,0 +1,8 @@
+#dont push secrets
+/secrets.py
+
+#dont push cache
+/__pycache__
+
+#dont push authorization data
+/store/
