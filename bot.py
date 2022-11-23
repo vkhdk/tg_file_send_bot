@@ -18,7 +18,8 @@ import secrets
 bot = telebot.TeleBot(secrets.bot_token)
 
 #read authorization data
-authorization_data = pd.read_csv('./store/authorization_data.csv', sep=',')
+link_authorization_data = secrets.authorization_data_link + secrets.authorization_data_name
+authorization_data = pd.read_csv(f'{link_authorization_data}.csv', sep=',')
 
 @bot.message_handler(chat_types=['private'],commands=['start'])
 def start_keyboard(message):
