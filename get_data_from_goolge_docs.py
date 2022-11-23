@@ -20,7 +20,7 @@ def down_load_google_doc(doc_key):
     return(df)
 
 def save_df_to_csv(df, link, file_name):
-    df.to_csv(link + f'{file_name}.csv', index=False)
+    df.to_csv(link + f'{file_name}.csv')
 
 if __name__ == '__main__':
     doc_key = secrets.google_doc_key
