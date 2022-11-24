@@ -3,6 +3,7 @@
 
 #dont push cache
 /__pycache__
+/.vscode
 
 #dont push authorization data
 /store/
