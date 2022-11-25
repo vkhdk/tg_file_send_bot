@@ -63,7 +63,11 @@ def check_login(message):
         connect = sqlite3.connect(chat_id_db_link)
         cursor = connect.cursor()
         # checking for duplication
-        cursor.execute(f"SELECT * FROM chat_id_data WHERE chat_id_data.chat_id = {chat_id} AND chat_id_data.login = '{user_login}'")
+        cursor.execute(f"SELECT * "
+                       f"FROM chat_id_data "
+                       f"WHERE chat_id_data.chat_id = {chat_id} "
+                       f"AND chat_id_data.login = '{user_login}'"
+                       )
         cursor_output = cursor.fetchone()
         if cursor_output is None:
             # write to db
@@ -79,7 +83,7 @@ def check_login(message):
             bot.register_next_step_handler(msg, check_password)
     else:
         bot.send_message(
-            message.chat.id, (f'username {user_login} not found'))
+            message.chat.id, (f'Username {user_login} not found'))
 
 
 def check_password(message):
@@ -93,5 +97,6 @@ def authorization_data():
         secrets.authorization_data_name
     authorization_data = pd.read_csv(f'{link_authorization_data}.csv', sep=',')
     return authorization_data
+
 
 bot.polling()
