@@ -94,7 +94,4 @@ def authorization_data():
     authorization_data = pd.read_csv(f'{link_authorization_data}.csv', sep=',')
     return authorization_data
 
-
-bot.enable_save_next_step_handlers(delay=2)
-bot.load_next_step_handlers()
 bot.polling()

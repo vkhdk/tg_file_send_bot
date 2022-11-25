@@ -12,7 +12,7 @@ import requests
 import secrets
 
 
-def down_load_google_doc(doc_key):
+def download_google_doc(doc_key):
     google_doc_url = 'https://docs.google.com/spreadsheets/d/'
     output_param = '/export?gid=0&format=csv'
     r = requests.get(google_doc_url + doc_key + output_param)
@@ -30,16 +30,7 @@ if __name__ == '__main__':
     authorization_data_link = secrets.authorization_data_link
     authorization_data_name = secrets.authorization_data_name
 
-    df_authorization_data = down_load_google_doc(google_authorization_data_key)
+    df_authorization_data = download_google_doc(google_authorization_data_key)
     save_df_to_csv(df_authorization_data,
                    authorization_data_link,
                    authorization_data_name)
-
-    google_chat_id_data_key = secrets.google_chat_id_data_key
-    chat_id_data_link = secrets.chat_id_data_link
-    chat_id_data_name = secrets.chat_id_data_name
-
-    df_chat_id_data = down_load_google_doc(google_chat_id_data_key)
-    save_df_to_csv(df_chat_id_data,
-                   chat_id_data_link,
-                   chat_id_data_name)
