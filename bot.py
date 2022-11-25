@@ -1,9 +1,8 @@
 # importing public libraries
 import datetime as dt
 from datetime import datetime
-import logging
 import pandas as pd
-import json
+import sqlite3
 
 # importing library from pyTelegramBotAPI
 import telebot
@@ -18,45 +17,74 @@ import secrets
 bot = telebot.TeleBot(secrets.bot_token)
 
 
+# initializing database
+chat_id_db_link = secrets.chat_id_db_link + secrets.chat_id_db_name
+connect = sqlite3.connect(chat_id_db_link)
+cursor = connect.cursor()
+# creating a table
+cursor.execute("""CREATE TABLE IF NOT EXISTS chat_id_data(
+    chat_id INTEGER,
+    login TEXT
+    )""")
+connect.commit()
+
+
 @bot.message_handler(chat_types=['private'], commands=['start'])
 def start_keyboard(message):
+    # creating a keyboard
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton(text='👤 Авторизация')
-    btn2 = types.KeyboardButton(text='📖 Инструкция')
+    btn1 = types.KeyboardButton(text='👤 Log in')
+    btn2 = types.KeyboardButton(text='📖 Manual')
     kb.add(btn1, btn2)
     bot.send_message(
-        message.chat.id, f'Привет, {message.from_user.first_name}!', reply_markup=kb)
+        message.chat.id, f'Hi, {message.from_user.first_name}!', reply_markup=kb)
 
 
 @bot.message_handler(chat_types=['private'], content_types=['text'])
 def keyboard_navigation(message):
-    if message.text == '📖 Инструкция':
-        bot.send_message(message.chat.id, (f'Бот создан для отправки файлов за указанную дату.\n'
-                                           f'Для получения файла необходимо авторизоваться.'
+    if message.text == '📖 Manual':
+        bot.send_message(message.chat.id, (f'Bot is designed to receive files\n'
+                                           f'To receive the file, you need to log in'
                                            ))
-    if message.text == '👤 Авторизация':
-        msg = bot.send_message(message.chat.id, (f'Для авторизации необходимо ввести логин и пароль.\n'
-                                                 f'Введите ЛОГИН'))
+    if message.text == '👤 Log in':
+        msg = bot.send_message(
+            message.chat.id, (f'To log in, enter your username'))
         bot.register_next_step_handler(msg, check_login)
 
 
 def check_login(message):
+    chat_id = message.chat.id
     user_login = message.text
     authorization_data_full = authorization_data()
     authorization_data_current = authorization_data_full[
         authorization_data_full['login'] == user_login]
     if len(authorization_data_current) > 0:
-        chat_id_data_full = chat_id_data()
-        chat_id_data_current = chat_id_data_full[chat_id_data_full['login'] == user_login]
-        msg = bot.send_message(message.chat.id, (f'Введите ПАРОЛЬ'))
-        bot.register_next_step_handler(msg, check_password)
+        # database connect
+        connect = sqlite3.connect(chat_id_db_link)
+        cursor = connect.cursor()
+        # checking for duplication
+        cursor.execute(f"SELECT * FROM chat_id_data WHERE chat_id_data.chat_id = {chat_id} AND chat_id_data.login = '{user_login}'")
+        cursor_output = cursor.fetchone()
+        if cursor_output is None:
+            # write to db
+            user_info = [chat_id, user_login]
+            cursor.execute("INSERT INTO chat_id_data VALUES(?,?);", user_info)
+            connect.commit()
+            # send next question
+            msg = bot.send_message(message.chat.id, (f'enter your password'))
+            bot.register_next_step_handler(msg, check_password)
+        else:
+            # send next question
+            msg = bot.send_message(message.chat.id, (f'enter your password'))
+            bot.register_next_step_handler(msg, check_password)
     else:
         bot.send_message(
-            message.chat.id, (f'Пользователь с логином {user_login} не найден'))
+            message.chat.id, (f'username {user_login} not found'))
 
 
 def check_password(message):
-    bot.send_message(message.chat.id, (f'Пока тут все!'))
+    bot.send_message(
+        message.chat.id, (f'Пока тут все!, но вот тебе твой логин {message.text}'))
 
 
 # read authorization data
@@ -66,14 +94,7 @@ def authorization_data():
     authorization_data = pd.read_csv(f'{link_authorization_data}.csv', sep=',')
     return authorization_data
 
-# read chat id data
-def chat_id_data():
-    link_chat_id_data = secrets.chat_id_data_link + \
-        secrets.chat_id_data_name
-    chat_id_data = pd.read_csv(f'{link_chat_id_data}.csv', sep=',')
-    return chat_id_data
 
-# write current user info
-
-
+bot.enable_save_next_step_handlers(delay=2)
+bot.load_next_step_handlers()
 bot.polling()
