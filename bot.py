@@ -58,32 +58,38 @@ def check_login(message):
     authorization_data_full = authorization_data()
     authorization_data_current = authorization_data_full[
         authorization_data_full['login'] == user_login]
+    # check login in google doc
     if len(authorization_data_current) > 0:
-        # database connect
-        connect = sqlite3.connect(chat_id_db_link)
-        cursor = connect.cursor()
-        # checking for duplication
-        cursor.execute(f"SELECT * "
-                       f"FROM chat_id_data "
-                       f"WHERE chat_id_data.chat_id = {chat_id} "
-                       f"AND chat_id_data.login = '{user_login}'"
-                       )
-        cursor_output = cursor.fetchone()
-        if cursor_output is None:
-            # write to db
-            user_info = [chat_id, user_login]
-            cursor.execute("INSERT INTO chat_id_data VALUES(?,?);", user_info)
-            connect.commit()
-            # send next question
-            msg = bot.send_message(message.chat.id, (f'enter your password'))
-            bot.register_next_step_handler(msg, check_password)
+        if authorization_data_current['access'].values[:1][0].lower() == 'yes':
+            # database connect
+            connect = sqlite3.connect(chat_id_db_link)
+            cursor = connect.cursor()
+            # checking for duplication
+            cursor.execute(f"SELECT * "
+                           f"FROM chat_id_data "
+                           f"WHERE chat_id_data.chat_id = {chat_id} "
+                           f"AND chat_id_data.login = '{user_login}'")
+            cursor_output = cursor.fetchone()
+            if cursor_output is None:
+                # write to db
+                user_info = [chat_id, user_login]
+                cursor.execute(
+                    "INSERT INTO chat_id_data VALUES(?,?);", user_info)
+                connect.commit()
+                # send next question
+                msg = bot.send_message(
+                    message.chat.id, (f'enter your password'))
+                bot.register_next_step_handler(msg, check_password)
+            else:
+                # send next question
+                msg = bot.send_message(
+                    message.chat.id, (f'enter your password'))
+                bot.register_next_step_handler(msg, check_password)
         else:
-            # send next question
-            msg = bot.send_message(message.chat.id, (f'enter your password'))
-            bot.register_next_step_handler(msg, check_password)
+            bot.send_message(
+                message.chat.id, (f'Access for user {user_login} denied'))
     else:
-        bot.send_message(
-            message.chat.id, (f'Username {user_login} not found'))
+        bot.send_message(message.chat.id, (f'Username {user_login} not found'))
 
 
 def check_password(message):
