@@ -107,17 +107,16 @@ def check_password(message):
     # database connect
     connect = sqlite3.connect(chat_id_db_link)
     cursor = connect.cursor()
-
     # take login from db
-    #cursor.execute(f"SELECT * "
-    #               f"FROM chat_id_data "
-    #               f"WHERE chat_id_data.chat_id = {chat_id} "
-    #               f"AND chat_id_data.login = '{user_login}'")
-    #cursor_output = cursor.fetchone()
-    #user_password = 
-    
+    cursor.execute(f"SELECT chat_id_data.login "
+                   f"FROM chat_id_data "
+                   f"WHERE chat_id_data.chat_id = {chat_id} "
+                   f"ORDER by chat_id_data.timestamp DESC "
+                   f"LIMIT 1")
+    cursor_output = cursor.fetchone()
+    user_login = cursor_output[0]
     bot.send_message(
-        message.chat.id, (f'Пока тут все!, но вот тебе твой логин {message.text}'))
+        message.chat.id, (f'вот твой последний логин {user_login}'))
 
 
 # read authorization data
