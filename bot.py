@@ -24,7 +24,8 @@ cursor = connect.cursor()
 # creating a table
 cursor.execute("""CREATE TABLE IF NOT EXISTS chat_id_data(
     chat_id INTEGER,
-    login TEXT
+    login TEXT,
+    date TEXT
     )""")
 connect.commit()
 
@@ -55,6 +56,8 @@ def keyboard_navigation(message):
 def check_login(message):
     chat_id = message.chat.id
     user_login = message.text
+    date_now = str(dt.datetime.now())
+    user_info = [chat_id, user_login, date_now]
     authorization_data_full = authorization_data()
     authorization_data_current = authorization_data_full[
         authorization_data_full['login'] == user_login]
@@ -65,22 +68,28 @@ def check_login(message):
             connect = sqlite3.connect(chat_id_db_link)
             cursor = connect.cursor()
             # checking for duplication
-            cursor.execute(f"SELECT * "
+            cursor.execute(f"SELECT chat_id_data.date "
                            f"FROM chat_id_data "
                            f"WHERE chat_id_data.chat_id = {chat_id} "
                            f"AND chat_id_data.login = '{user_login}'")
             cursor_output = cursor.fetchone()
             if cursor_output is None:
                 # write to db
-                user_info = [chat_id, user_login]
                 cursor.execute(
-                    "INSERT INTO chat_id_data VALUES(?,?);", user_info)
+                    "INSERT INTO chat_id_data VALUES(?,?,?);", user_info)
                 connect.commit()
                 # send next question
                 msg = bot.send_message(
                     message.chat.id, (f'enter your password'))
                 bot.register_next_step_handler(msg, check_password)
             else:
+                # update date in db
+                cursor.execute(
+                    f"UPDATE chat_id_data "
+                    f"SET date = '{user_info[2]}' "
+                    f"WHERE chat_id_data.chat_id = {chat_id} "
+                    f"AND chat_id_data.login = '{user_login}'")
+                connect.commit()
                 # send next question
                 msg = bot.send_message(
                     message.chat.id, (f'enter your password'))
@@ -93,11 +102,26 @@ def check_login(message):
 
 
 def check_password(message):
+    chat_id = message.chat.id
+    # database connect
+    connect = sqlite3.connect(chat_id_db_link)
+    cursor = connect.cursor()
+
+    # take login from db
+    #cursor.execute(f"SELECT * "
+    #               f"FROM chat_id_data "
+    #               f"WHERE chat_id_data.chat_id = {chat_id} "
+    #               f"AND chat_id_data.login = '{user_login}'")
+    #cursor_output = cursor.fetchone()
+    #user_password = 
+    
     bot.send_message(
         message.chat.id, (f'Пока тут все!, но вот тебе твой логин {message.text}'))
 
 
 # read authorization data
+# file structure "login,password,chat_id,access"
+# get_data_from_goolge_docs.py
 def authorization_data():
     link_authorization_data = secrets.authorization_data_link + \
         secrets.authorization_data_name
