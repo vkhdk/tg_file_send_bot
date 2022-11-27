@@ -1,6 +1,7 @@
 # importing public libraries
 import datetime as dt
 from datetime import datetime
+import time
 import pandas as pd
 import sqlite3
 
@@ -25,7 +26,7 @@ cursor = connect.cursor()
 cursor.execute("""CREATE TABLE IF NOT EXISTS chat_id_data(
     chat_id INTEGER,
     login TEXT,
-    date TEXT
+    timestamp INTEGER
     )""")
 connect.commit()
 
@@ -56,8 +57,8 @@ def keyboard_navigation(message):
 def check_login(message):
     chat_id = message.chat.id
     user_login = message.text
-    date_now = str(dt.datetime.now())
-    user_info = [chat_id, user_login, date_now]
+    timestamp_now = int(time.time())
+    user_info = [chat_id, user_login, timestamp_now]
     authorization_data_full = authorization_data()
     authorization_data_current = authorization_data_full[
         authorization_data_full['login'] == user_login]
@@ -68,7 +69,7 @@ def check_login(message):
             connect = sqlite3.connect(chat_id_db_link)
             cursor = connect.cursor()
             # checking for duplication
-            cursor.execute(f"SELECT chat_id_data.date "
+            cursor.execute(f"SELECT * "
                            f"FROM chat_id_data "
                            f"WHERE chat_id_data.chat_id = {chat_id} "
                            f"AND chat_id_data.login = '{user_login}'")
@@ -83,10 +84,10 @@ def check_login(message):
                     message.chat.id, (f'enter your password'))
                 bot.register_next_step_handler(msg, check_password)
             else:
-                # update date in db
+                # update timestamp in db
                 cursor.execute(
                     f"UPDATE chat_id_data "
-                    f"SET date = '{user_info[2]}' "
+                    f"SET timestamp = {user_info[2]} "
                     f"WHERE chat_id_data.chat_id = {chat_id} "
                     f"AND chat_id_data.login = '{user_login}'")
                 connect.commit()
