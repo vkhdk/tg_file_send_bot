@@ -17,7 +17,6 @@ import secrets
 # store token in file secrets.py
 bot = telebot.TeleBot(secrets.bot_token)
 
-
 # initializing database
 chat_id_db_link = secrets.chat_id_db_link + secrets.chat_id_db_name
 connect = sqlite3.connect(chat_id_db_link)
